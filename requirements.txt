@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+openai
+pymupdf
+requests
+python-multipart
+python-dotenv
+psycopg2-binary
+pymupdf
+pillow
