@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 import re
 import psycopg2
 import psycopg2.extras
-from fpdf import FPDF
 
 load_dotenv()
 aux_url = os.environ['PG_URL']

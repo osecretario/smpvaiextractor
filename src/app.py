@@ -6,7 +6,6 @@ from openai import OpenAI
 from .functions import converter_para_json, extrair_conteudo_json, get_query
 from .llm import prompt_crm, prompt_debito, prompt_diploma, prompt_especialista, prompt_etico, prompt_rg, gerar_query_sql, merge_obj_gpt, gerar_resposta_sql, file_response
 from .bd import estrutura_bd
-from pdf2image import convert_from_bytes
 import fitz
 import json
 import io
