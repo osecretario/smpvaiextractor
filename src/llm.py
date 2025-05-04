@@ -92,7 +92,7 @@ Você irá receber um documento referente a um certificado etico profissional au
 
 
 prompt_debito = f"""
-Você irá receber um documento referente a um certificado de debitos medicos autorizado pelo titular a extração dos dados utilizando IA. Sua função é extrair as seguintes informações do documento e colocar em formato json: Nome, Data , Crm, Resultado.Coloque as datas no formato YYYY-MM-DD. Classifique sempre o resultado como Ok, caso a pessoa esteja ok com a parte de devitos, e Nao Ok quando constar algo negativo da pessoa.
+Você irá receber um documento referente a um certificado de debitos medicos autorizado pelo titular a extração dos dados utilizando IA. Sua função é extrair as seguintes informações do documento e colocar em formato json: Nome, Data de validade, Crm, Resultado.Coloque as datas no formato YYYY-MM-DD. Classifique sempre o resultado como Ok, caso a pessoa esteja ok com a parte de devitos, e Nao Ok quando constar algo negativo da pessoa.
 """
 
 
