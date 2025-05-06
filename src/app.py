@@ -11,7 +11,9 @@ import json
 import io
 from PIL import Image
 import io
+import traceback
 import os
+import time
 from fastapi.middleware.cors import CORSMiddleware
 from .functions import encode_image
 import requests
@@ -267,4 +269,100 @@ async def extract_sql(payload: Any = Body(None)):
     }
     return dict_resposta
 
+@app.post("/gpt_by_assistant")
+async def gpt_assistant(payload: Any = Body(None)):
+    try:
+        input = payload['pergunta']
+        gerador_sql_id = payload['gerador_sql_id']
+        gerador_resposta_id = payload['gerador_resposta_id']
+
+        assistant_url = "https://api.openai.com/v1/threads/runs"
+        headers = {
+            "Content-Type" : "application/json",
+            "Authorization" : f"Bearer {aux_key}",
+            "OpenAI-Beta" : "assistants=v2"
+
+        }
+        data = {
+            "assistant_id": gerador_sql_id ,
+            "thread": {
+                "messages": [
+                {
+                    "role": "user","content":f"{input}"
+                }
+                ]
+            }
+        }
+
+        response = requests.post(url=assistant_url, headers=headers, json=data)
+        obj_resposta = response.json()
+        
+        thread_id = obj_resposta['thread_id']
+        run_id = obj_resposta['id']
+        url_status = f"https://api.openai.com/v1/threads/{thread_id}/runs/{run_id}"
+
+        status = "false"
+
+        while status != "completed":
+            print ('entrei no while')
+            chamada = requests.get(url=url_status, headers=headers)
+            chamada = chamada.json()
+            status = chamada['status']
+            print (status)
+            if status != "queued" and status != "in_progress" and status != "completed":
+                return f"Ops, tivemos um erro por aqui. Tente novamente mais tarde."
+            
+            time.sleep(1)
+
+
+
+
+        url_resposta = f"https://api.openai.com/v1/threads/{thread_id}/messages"
+        response_2 = requests.get(url=url_resposta, headers=headers)
+        obj_aux = response_2.json()
+        resposta_final = obj_aux['data'][0]['content'][0]['text']['value']
+        resposta_final = f"{resposta_final}".replace("```sql","").replace("```","")
+        print (resposta_final)
+        final = get_query(resposta_final)
+
+        data_2 = {
+            "assistant_id": gerador_resposta_id ,
+            "thread": {
+                "messages": [
+                {
+                    "role": "user","content":f"{final}"
+                }
+                ]
+            }
+        }
+
+        response_final = requests.post(url=assistant_url, headers=headers, json=data_2)
+        obj_resposta_final = response_final.json()
+        thread_id_final = obj_resposta_final['thread_id']
+        run_id_final = obj_resposta_final['id']
+        url_status = f"https://api.openai.com/v1/threads/{thread_id_final}/runs/{run_id_final}"
+
+        status = "false"
+
+        while status != "completed":
+            print ('entrei no while')
+            chamada = requests.get(url=url_status, headers=headers)
+            chamada = chamada.json()
+            status = chamada['status']
+            print (status)
+            if status != "queued" and status != "in_progress" and status != "completed":
+                return f"Ops, tivemos um erro por aqui. Tente novamente mais tarde."
+            
+            time.sleep(1)
+
+
+        url_resposta_final = f"https://api.openai.com/v1/threads/{thread_id_final}/messages"
+        response_final_2 = requests.get(url=url_resposta_final, headers=headers)
+        obj_aux_final = response_final_2.json()
+        resposta_final_2 = obj_aux_final['data'][0]['content'][0]['text']['value']
+        return resposta_final_2
+    except Exception as e:
+                    print(e)
+                    
+                    return str(e)
 
