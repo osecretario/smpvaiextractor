@@ -55,7 +55,8 @@ def convert_pdf_to_images(pdf_bytes: bytes) -> List[Image.Image]:
     return images
 
 @app.post("/make_query")
-async def make_query(query:str):
+async def make_query(payload: Any = Body(None)):
+    query = payload['pergunta']
     aux_url = os.environ['PG_URL']
     pg_uri = aux_url
     conn = psycopg2.connect(pg_uri)
