@@ -9,6 +9,7 @@ from .bd import estrutura_bd
 import fitz
 import json
 import io
+import psycopg2
 from PIL import Image
 import io
 import traceback
@@ -53,7 +54,16 @@ def convert_pdf_to_images(pdf_bytes: bytes) -> List[Image.Image]:
     
     return images
 
-
+@app.post("/make_query")
+async def make_query(query:str):
+    aux_url = os.environ['PG_URL']
+    pg_uri = aux_url
+    conn = psycopg2.connect(pg_uri)
+    cursor = conn.cursor()
+    cursor.execute(query)
+    
+    return cursor.fetchall()
+    
 @app.post("/upload-mixed-to-pdf/")
 async def upload_mixed_to_pdf(files: List[UploadFile] = File(...)):
     images = []
