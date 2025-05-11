@@ -41,6 +41,73 @@ async def root():
     return RedirectResponse("/docs")
 
 
+@app.post("/sql_assistant")
+async def sql_assistant(payload: Any = Body(None)):
+    pergunta = payload['pergunta']
+    # Inicia thread
+    print ('Vou começar o run create and run')
+    run = client.beta.threads.create_and_run(
+        assistant_id="asst_75EkqUoZJkAFqvd3yfO9dW4r",
+        thread={
+            "messages": [
+            {"role": "user", "content": pergunta}
+            ]
+        }
+    )
+    run_id = run.id
+    thread_id = run.thread_id
+
+    print (" Vou começar o while")
+    # Aguarda o Assistant terminar de processar
+    while True:
+        print ("Entrei no while True")
+        run_status = client.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run_id)
+        if run_status.status in ["completed", "requires_action", "failed"]:
+            break
+        time.sleep(1)
+
+    # Caso seja uma function call
+    if run_status.status == "requires_action":
+        print ("entrei no status requires action")
+        tool_call = run_status.required_action.submit_tool_outputs.tool_calls[0]
+        query = eval(tool_call.function.arguments)["query"]
+
+
+        # Chamada ao seu backend Flask que executa a query
+        print ("Query é:", query)
+        print ("Vou mandar o request")
+        data = {
+            "pergunta" : query
+        }
+        url = "https://smpvaiextractor-906272597071.us-central1.run.app/make_query"
+        resposta_backend = requests.post(url=url, json=data)
+
+        # Retorna resultado da função para o Assistant
+        print ("Vou começar o run submit tull")
+        client.beta.threads.runs.submit_tool_outputs(
+            thread_id=thread_id,
+            run_id=run_id,
+            tool_outputs=[
+                {
+                    "tool_call_id": tool_call.id,
+                    "output": resposta_backend.text
+                }
+            ]
+        )
+
+        # Espera o Assistant responder com base nos dados retornados
+        while True:
+            print ("Entrei no segundo while")
+            final_run = client.beta.threads.runs.retrieve(thread_id=thread_id, run_id=run_id)
+            if final_run.status == "completed":
+                break
+        time.sleep(1)
+
+    # Em qualquer caso (com ou sem função), pega a resposta final
+    messages = client.beta.threads.messages.list(thread_id=thread_id)
+    print("\nResposta do Assistant:")
+    print(messages.data[0].content[0].text.value)
+    return messages.data[0].content[0].text.value
 
 def convert_pdf_to_images(pdf_bytes: bytes) -> List[Image.Image]:
     """Converte um PDF em uma lista de imagens RGB usando PyMuPDF."""
