@@ -44,10 +44,11 @@ async def root():
 @app.post("/sql_assistant")
 async def sql_assistant(payload: Any = Body(None)):
     pergunta = payload['pergunta']
+    assistant_id = payload['assistant_id']
     # Inicia thread
     print ('Vou começar o run create and run')
     run = client.beta.threads.create_and_run(
-        assistant_id="asst_75EkqUoZJkAFqvd3yfO9dW4r",
+        assistant_id=assistant_id,
         thread={
             "messages": [
             {"role": "user", "content": pergunta}
@@ -107,7 +108,11 @@ async def sql_assistant(payload: Any = Body(None)):
     messages = client.beta.threads.messages.list(thread_id=thread_id)
     print("\nResposta do Assistant:")
     print(messages.data[0].content[0].text.value)
-    return messages.data[0].content[0].text.value
+    dict_final = {
+        "resposta" : messages.data[0].content[0].text.value,
+        "thread_id" : thread_id
+    }
+    return json.loads(json.dumps(dict_final))
 
 def convert_pdf_to_images(pdf_bytes: bytes) -> List[Image.Image]:
     """Converte um PDF em uma lista de imagens RGB usando PyMuPDF."""
