@@ -45,18 +45,34 @@ async def root():
 async def sql_assistant(payload: Any = Body(None)):
     pergunta = payload['pergunta']
     assistant_id = payload['assistant_id']
+    thread_id = payload['thread_id']
     # Inicia thread
     print ('Vou começar o run create and run')
-    run = client.beta.threads.create_and_run(
-        assistant_id=assistant_id,
-        thread={
-            "messages": [
-            {"role": "user", "content": pergunta}
-            ]
-        }
-    )
-    run_id = run.id
-    thread_id = run.thread_id
+    if len(thread_id) == 0:
+        print ('entrei no len == 0')
+        
+        run = client.beta.threads.create_and_run(
+            assistant_id=assistant_id,
+            thread={
+                "messages": [
+                {"role": "user", "content": pergunta}
+                ]
+            }
+        )
+        thread_id = run.thread_id
+        run_id = run.id
+    else:
+        message = client.beta.threads.messages.create(
+        thread_id=thread_id,
+        role="user",
+        content=pergunta
+        )
+        run = client.beta.threads.runs.create_and_poll(
+            thread_id=thread_id,
+            assistant_id=assistant_id,
+        )
+        run_id = run.id
+
 
     print (" Vou começar o while")
     # Aguarda o Assistant terminar de processar
