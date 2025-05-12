@@ -7,9 +7,10 @@ from .functions import converter_para_json, extrair_conteudo_json, get_query
 from .llm import prompt_crm, prompt_debito, prompt_diploma, prompt_especialista, prompt_etico, prompt_rg, gerar_query_sql, merge_obj_gpt, gerar_resposta_sql, file_response
 from .bd import estrutura_bd
 import fitz
+import psycopg2
+import psycopg2.extras
 import json
 import io
-import psycopg2
 from PIL import Image
 import io
 import traceback
@@ -24,11 +25,12 @@ import uuid
 load_dotenv()
 aux_key = os.environ["OPEN_AI"]
 client = OpenAI(api_key=aux_key)
+origins = ['https://localhost:3000', 'https://localhost:8080','https://smpvaiextractor-906272597071.us-central1.run.app']
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=['null'],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,6 +41,21 @@ app.add_middleware(
 
 async def root():
     return RedirectResponse("/docs")
+
+
+
+def convert_pdf_to_images(pdf_bytes: bytes) -> List[Image.Image]:
+    """Converte um PDF em uma lista de imagens RGB usando PyMuPDF."""
+    images = []
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    for page in doc:
+        pix = page.get_pixmap()
+        img_bytes = pix.tobytes("png")
+        img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        images.append(img)
+    
+    return images
+
 
 
 @app.post("/sql_assistant")
@@ -130,17 +147,6 @@ async def sql_assistant(payload: Any = Body(None)):
     }
     return json.loads(json.dumps(dict_final))
 
-def convert_pdf_to_images(pdf_bytes: bytes) -> List[Image.Image]:
-    """Converte um PDF em uma lista de imagens RGB usando PyMuPDF."""
-    images = []
-    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-    for page in doc:
-        pix = page.get_pixmap()
-        img_bytes = pix.tobytes("png")
-        img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        images.append(img)
-    
-    return images
 
 @app.post("/make_query")
 async def make_query(payload: Any = Body(None)):
@@ -152,7 +158,8 @@ async def make_query(payload: Any = Body(None)):
     cursor.execute(query)
     
     return cursor.fetchall()
-    
+
+
 @app.post("/upload-mixed-to-pdf/")
 async def upload_mixed_to_pdf(files: List[UploadFile] = File(...)):
     images = []
@@ -368,6 +375,7 @@ async def extract_sql(payload: Any = Body(None)):
     }
     return dict_resposta
 
+
 @app.post("/gpt_by_assistant")
 async def gpt_assistant(payload: Any = Body(None)):
     try:
@@ -464,4 +472,5 @@ async def gpt_assistant(payload: Any = Body(None)):
                     print(e)
                     
                     return str(e)
+    
 
