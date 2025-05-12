@@ -109,13 +109,13 @@ async def sql_assistant(payload: Any = Body(None)):
 
         # Chamada ao seu backend Flask que executa a query
         print ("Query é:", query)
-        print ("Vou mandar o request")
-        data = {
-            "pergunta" : query
-        }
-        url = "https://smpvaiextractor-906272597071.us-central1.run.app/make_query"
-        resposta_backend = requests.post(url=url, json=data)
 
+        aux_url = os.environ['PG_URL']
+        pg_uri = aux_url
+        conn = psycopg2.connect(pg_uri)
+        cursor = conn.cursor()
+        cursor.execute(query)
+        resposta_backend = 'cursor.fetchall()'
         # Retorna resultado da função para o Assistant
         print ("Vou começar o run submit tull")
         client.beta.threads.runs.submit_tool_outputs(
@@ -124,7 +124,7 @@ async def sql_assistant(payload: Any = Body(None)):
             tool_outputs=[
                 {
                     "tool_call_id": tool_call.id,
-                    "output": resposta_backend.text
+                    "output": resposta_backend
                 }
             ]
         )
