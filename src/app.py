@@ -124,7 +124,7 @@ async def sql_assistant(payload: Any = Body(None)):
             tool_outputs=[
                 {
                     "tool_call_id": tool_call.id,
-                    "output": resposta_backend
+                    "output": f"{resposta_backend}"
                 }
             ]
         )
