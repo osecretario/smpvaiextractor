@@ -115,7 +115,7 @@ async def sql_assistant(payload: Any = Body(None)):
         conn = psycopg2.connect(pg_uri)
         cursor = conn.cursor()
         cursor.execute(query)
-        resposta_backend = 'cursor.fetchall()'
+        resposta_backend = cursor.fetchall()
         # Retorna resultado da função para o Assistant
         print ("Vou começar o run submit tull")
         client.beta.threads.runs.submit_tool_outputs(
